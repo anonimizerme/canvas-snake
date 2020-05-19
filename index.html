@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <canvas id="game">
+
+    </canvas>
+
+    <script>
+        const CELL_SIZE = 30;
+        const ROWS = 15;
+        const CELLS = 15;
+        const INITIAL_SNAKE = [
+            [Math.floor(CELLS/2), Math.floor(ROWS/2)],
+            [Math.floor(CELLS/2+1), Math.floor(ROWS/2)],
+            [Math.floor(CELLS/2+2), Math.floor(ROWS/2)],
+        ];
+        const INITIAL_MEAL = [0, 0];
+
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+
+        ctx.canvas.height = CELL_SIZE * ROWS;
+        ctx.canvas.width = CELL_SIZE * CELLS;
+
+        let updatedAt = new Date().getTime();
+        let direction = 1;
+
+        document.addEventListener('keydown', e => {
+            switch (e.code) {
+                case 'ArrowUp':
+                    if (direction == 1 || direction == 3)
+                        direction = 0;
+                    break;
+                case 'ArrowLeft':
+                    if (direction == 0 || direction == 2)
+                        direction = 1;
+                    break;
+                case 'ArrowDown':
+                    if (direction == 1 || direction == 3)
+                        direction = 2;
+                    break;
+                case 'ArrowRight':
+                    if (direction == 0 || direction == 2)
+                        direction = 3;
+                    break;
+            }
+        });
+
+        let frameId,
+            speed = 200,
+            snake,
+            meal;
+
+        function draw() {
+            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+            // draw the grid
+            for (let i=0; i<=ROWS; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i*CELL_SIZE, 0);
+                ctx.lineTo(i*CELL_SIZE, CELL_SIZE * ROWS);
+                ctx.stroke();
+            }
+
+            for (let i=0; i<=CELLS; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, i*CELL_SIZE);
+                ctx.lineTo(CELLS*CELL_SIZE, i*CELL_SIZE);
+                ctx.stroke();
+            }
+
+            // draw the snake
+            if (snake === undefined) {
+                snake = INITIAL_SNAKE
+            }
+
+            ctx.fillStyle = 'red';
+            for (let [x, y] of snake) {
+                ctx.fillRect(x*CELL_SIZE, y*CELL_SIZE, CELL_SIZE, CELL_SIZE);
+            }
+
+            // draw the meal
+            if (meal === undefined) {
+                meal = INITIAL_MEAL;
+            }
+
+            ctx.fillStyle = 'green';
+            ctx.fillRect(meal[0]*CELL_SIZE, meal[1]*CELL_SIZE, CELL_SIZE, CELL_SIZE);
+
+            const currTime = new Date().getTime();
+            if (currTime - updatedAt >= speed) {
+                // if (direction != nextDirection) {
+                //     direction = nextDirection;
+                // }
+
+                let nextPoint = [0, 0];
+                switch (direction) {
+                    case 0:
+                        nextPoint = [snake[0][0], snake[0][1]-1];
+                        break;
+                    case 1:
+                        nextPoint = [snake[0][0]-1, snake[0][1]];
+                        break;
+                    case 2:
+                        nextPoint = [snake[0][0], snake[0][1]+1];
+                        break;
+                    case 3:
+                        nextPoint = [snake[0][0]+1, snake[0][1]];
+                        break;
+                }
+
+                snake.unshift(nextPoint);
+
+                if (nextPoint[0] == meal[0] && nextPoint[1] == meal[1]) {
+                    meal = [
+                        Math.floor(Math.random()*CELLS),
+                        Math.floor(Math.random()*ROWS),
+                    ];
+
+                    speed -= 5;
+                } else {
+                    snake.pop();
+                }
+
+                let isGameOver = snake[0][0] < 0 || snake[0][0] >= CELLS || snake[0][1] < 0 || snake[0][1] >= ROWS;
+                for (let i in snake) {
+                    if (i == 0) continue;
+
+                    if (snake[i][0] == snake[0][0] && snake[i][1] == snake[0][1]) {
+                        isGameOver = true;
+                        break;
+                    }
+                }
+
+                if (isGameOver) {
+                    alert('Game over!');
+                    window.cancelAnimationFrame(frameId);
+                    return;
+                }
+
+                updatedAt = currTime;
+            }
+
+            frameId = window.requestAnimationFrame(draw);
+        }
+
+        frameId = window.requestAnimationFrame(draw);
+    </script>
+</body>
+</html>
